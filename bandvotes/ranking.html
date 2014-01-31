@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+  </head>
+  <body>
+    <div class="container theme-showcase">
+    <h2>{{ bandid }} Ranking</h2>
+    <table class="table">
+	<th>Song Name</th><th>Interpreter/Version</th>
+	<th>Votes</th>
+    {% for song in songs %}
+      <tr>
+	<td>
+	<a href="/{{ bandid }}/song/{{ song.name }}/{{ song.interpreter }}">
+	{{ song.name }}
+	</a>
+	</td><td>{{ song.interpreter }}</td>
+	<td>{{ song.vote_cnt }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+
+
+   <div>
+    <form name="nominate" action="/vote" method="post">
+<table class="table"><tr><td>
+      <h4>Nominate:</h4>
+      <input type="hidden" name="bandid" value="{{ bandid }}">
+      </td></tr>
+      <tr><td>
+      Song Name (e.g. La Vie en Rose):
+      <input type="text" name="name">
+      </td></tr>
+      <tr><td>
+      Interpreter (e.g. Edith Piaf):
+      <input type="text" name="interpreter">
+      </td></tr>
+      <tr><td>
+      <button class="btn btn-default" type="submit">Nominate</button>
+      </td></tr>
+      </table>
+    </form>
+   </div>
+
+    <hr>
+  <a href="{{ logout_uri }}">Sign out</a>
+  </div>
+  </body>
+</html>
+{% endautoescape %}
+

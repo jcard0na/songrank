@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+  </head>
+  <body>
+    <div class="container theme-showcase">
+    <h2> {{song.name}} details</h2>
+    <table class="table">
+    <th>Song Name</th><th>Interpreter/Version</th>
+	<th>Votes</th>
+    <tr>
+    <td>
+    {{ song.name }}
+    </td>
+    <td>
+    {{ song.interpreter }}
+    </td>
+    <td>
+    {{ song.vote_cnt }}
+    </td>
+    </tr>
+    <tr>
+    <td colspan="3">
+    <form name="vote" action="/vote" method="post">
+      <input type="hidden" name="bandid" value="{{ bandid }}">
+      <input type="hidden" name="name" value="{{ song.name }}">
+      <input type="hidden" name="interpreter" value="{{ song.interpreter}}">
+{% if not user_has_voted %}
+      Vote for this song<br/>
+      <button class="btn btn-primary btn-lg" type="submit">Vote</button>
+{% else %}
+      Unvote for this song<br/>
+      <button class="btn btn-primary btn-lg" type="submit">Unvote</button>
+      <input type="hidden" name="undo" value="true">
+{% endif %}
+    </form>
+    </td></tr>
+    <tr>
+    <td colspan="2">
+    <b>Voted by</b>
+    </td>
+    <td>
+    <b>Last vote: </b>{{ last_update }} 
+    </td>
+    </tr>
+    <table class="table">
+    {% for user in song.votes %}
+      <tr>
+	<td colspan="3">{{ user.nickname() }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+    <tr>
+    <td colspan="3">
+    <b>Comments</b>
+	<table class="table">
+    {% for comment in song.comments %}
+      <tr>
+	<td>{{ comment }}</td>
+      </tr>
+    {% endfor %}
+        </table>
+    </td>
+    </tr>
+    <tr><td>
+    <form name="comment" action="/comment" method="post">
+      <input type="hidden" name="bandid" value="{{ bandid }}">
+      <input type="hidden" name="name" value="{{ song.name }}">
+      <input type="hidden" name="interpreter" value="{{ song.interpreter}}">
+<textarea class="form-control" name="comment"></textarea>
+      <button class="btn btn-primary" type="submit">Write Comment</button>
+    </form>
+    </td>
+    </tr>
+    </table>
+
+
+    <hr>
+    <a href="/{{ bandid }}/results"> Back to ranking</a>
+  </div>
+  </body>
+</html>
+{% endautoescape %}
+
