@@ -52,13 +52,13 @@ class SongNode(ndb.Model):
     vote_cnt = ndb.IntegerProperty()
     last_update = ndb.DateTimeProperty(auto_now=True)
     comments = ndb.StringProperty(repeated=True)
+    links = ndb.StringProperty(repeated=True)
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user:
-            self.response.headers['Content-Type'] = 'text/plain'
-            self.response.write('Hello, ' + user.nickname())
+            self.redirect("five-frogs-and-a-matador/results")
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -87,6 +87,31 @@ class Comment(webapp2.RequestHandler):
         song.put()
         self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
 
+class AddLink(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        bandid = self.request.get('bandid')
+        logging.info('bandid: ' + bandid)
+        try:
+            namespace_manager.set_namespace(bandid)
+        except:
+            self.error(400);
+            return
+
+        name = self.request.get('name')
+        interpreter = self.request.get('interpreter')
+        link = self.request.get('link')
+        song = SongNode.get_by_id(name+interpreter)
+        if not song:
+            self.error(404)
+            
+        song.links.append(link)
+        song.put()
+        self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
+
 class Vote(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
@@ -110,8 +135,7 @@ class Vote(webapp2.RequestHandler):
             song.interpreter = self.request.get('interpreter')
             song.vote_cnt = 0
             song.comments = [] 
-
-
+            song.links = [] 
             
         unvote = self.request.get('undo', default_value=False)
         logging.info(unvote)
@@ -186,6 +210,7 @@ application = webapp2.WSGIApplication([
     (r'/', MainPage),
     (r'/vote', Vote),
     (r'/comment', Comment),
+    (r'/link', AddLink),
     (r'/(.*)/results', Results),
     (r'/(.*)/song/(.*)/(.*)', SongDetails),
 ], debug=True)

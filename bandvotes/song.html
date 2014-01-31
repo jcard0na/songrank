@@ -59,6 +59,30 @@
       </tr>
     {% endfor %}
     </table>
+
+    <tr>
+    <td colspan="3">
+    <b>Links</b>
+	<table class="table">
+    {% for link in song.links %}
+      <tr>
+	<td><a href="{{ link }}">{{ link }}</a></td>
+      </tr>
+    {% endfor %}
+        </table>
+    </td>
+    </tr>
+    <tr><td>
+    <form name="link" action="/link" method="post">
+      <input type="hidden" name="bandid" value="{{ bandid }}">
+      <input type="hidden" name="name" value="{{ song.name }}">
+      <input type="hidden" name="interpreter" value="{{ song.interpreter}}">
+      <input type="text" class="form-control" name="link"></textarea>
+      <button class="btn btn-primary" type="submit">Send Link</button>
+    </form>
+    </td>
+    </tr>
+
     <tr>
     <td colspan="3">
     <b>Comments</b>
