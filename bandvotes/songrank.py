@@ -168,7 +168,7 @@ class Results(webapp2.RequestHandler):
             return
         
         ranking_query = SongNode.query().order(-SongNode.vote_cnt)
-        songs = ranking_query.fetch(10)
+        songs = ranking_query.fetch(20)
 
         template_values = {
             'songs': songs,
