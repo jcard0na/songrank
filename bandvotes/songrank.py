@@ -17,6 +17,8 @@ from google.appengine.api import users
 import webapp2
 import jinja2
 
+VOTES_TO_GRADUATE=6
+
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
@@ -58,7 +60,7 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user:
-            self.redirect("five-frogs-and-a-matador/results")
+            self.redirect("five-frogs-and-a-matador/ranking")
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -128,7 +130,9 @@ class Vote(webapp2.RequestHandler):
 
         name = self.request.get('name')
         interpreter = self.request.get('interpreter')
-        song = SongNode.get_by_id(name+interpreter)
+        songid = name + interpreter
+        song = SongNode.get_by_id(songid)
+        logging.info('good songid:' + songid + 'len: ' + str(len(songid)))
         if not song:
             song = SongNode(id=name+interpreter)
             song.name = name
@@ -154,7 +158,33 @@ class Vote(webapp2.RequestHandler):
         song.put()
         self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
 
-class Results(webapp2.RequestHandler):
+class MultiVote(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        bandid = self.request.get('bandid')
+        logging.info('bandid: ' + bandid)
+        try:
+            namespace_manager.set_namespace(bandid)
+        except:
+            self.error(400);
+            return
+
+        votes = self.request.get_all('votes')
+        for songid in votes:
+            logging.info('songid:' + songid + 'len: ' + str(len(songid)))
+            song = SongNode.get_by_id(songid)
+            if user not in song.votes:
+                logging.info(str(user) + ' voted for ' + song.name)
+                song.votes.append(user)
+                song.vote_cnt += 1
+                song.put()
+
+        self.redirect('/' + bandid + '/thanks')
+
+class Ranking(webapp2.RequestHandler):
     def get(self, bandid):
         user = users.get_current_user()
         if not user:
@@ -168,7 +198,45 @@ class Results(webapp2.RequestHandler):
             return
         
         ranking_query = SongNode.query().order(-SongNode.vote_cnt)
+        ranking_query = ranking_query.filter(SongNode.vote_cnt < VOTES_TO_GRADUATE)
         songs = ranking_query.fetch(20)
+
+        template_values = {
+            'songs': songs,
+            'bandid': bandid,
+            'logout_uri': users.create_login_url(self.request.uri),
+            'votes_to_graduate': VOTES_TO_GRADUATE
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('ranking.html')
+        self.response.write(template.render(template_values))
+
+class Thanks(webapp2.RequestHandler):
+    def get(self, bandid):
+
+        template_values = {
+            'bandid': bandid,
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('thanks.html')
+        self.response.write(template.render(template_values))
+
+class Repertoire(webapp2.RequestHandler):
+    def get(self, bandid):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        logging.info('bandid: ' + bandid)
+        try:
+            namespace_manager.set_namespace(bandid)
+        except:
+            self.error(400);
+            return
+        
+        ranking_query = SongNode.query().order(-SongNode.vote_cnt)
+        ranking_query = ranking_query.filter(SongNode.vote_cnt >= VOTES_TO_GRADUATE)
+        songs = ranking_query.fetch()
 
         template_values = {
             'songs': songs,
@@ -176,7 +244,7 @@ class Results(webapp2.RequestHandler):
             'logout_uri': users.create_login_url(self.request.uri)
         }
 
-        template = JINJA_ENVIRONMENT.get_template('ranking.html')
+        template = JINJA_ENVIRONMENT.get_template('repertoire.html')
         self.response.write(template.render(template_values))
 
 class SongDetails(webapp2.RequestHandler):
@@ -210,9 +278,13 @@ class SongDetails(webapp2.RequestHandler):
 application = webapp2.WSGIApplication([
     (r'/', MainPage),
     (r'/vote', Vote),
+    (r'/multivote', MultiVote),
     (r'/comment', Comment),
     (r'/link', AddLink),
-    (r'/(.*)/results', Results),
+    (r'/(.*)/thanks', Thanks),
+    (r'/(.*)/ranking', Ranking),
+    (r'/(.*)/results', Ranking),
+    (r'/(.*)/repertoire', Repertoire),
     (r'/(.*)/song/(.*)/(.*)', SongDetails),
 ], debug=True)
 

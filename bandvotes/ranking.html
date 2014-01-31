@@ -13,12 +13,27 @@
   </head>
   <body>
     <div class="container theme-showcase">
-    <h2>{{ bandid }} Ranking</h2>
+    <h2>{{ bandid }} Candidate Song Ranking</h2>
+
+<p>
+This page shows the songs that we are considering for our <a href="/{{ bandid }}/repertoire">official repertoire</a>.
+Band members nominate songs using the form at the bottom of this page.</p>  
+<p>
+Songs start with one vote.  A song that reaches {{ votes_to_graduate }} votes
+is automatically moved to the <a href="/{{ bandid
+}}/repertoire">repertoire</a>.
+</p>
+
+    <form name=multivote action="/multivote" method="post">
+    <input type="hidden" name="bandid" value="{{ bandid }}">
     <table class="table">
-	<th>Song Name</th><th>Interpreter/Version</th>
+	<th>Pick</th><th>Song Name</th><th>Interpreter/Version</th>
 	<th>Votes</th>
     {% for song in songs %}
       <tr>
+	<td>
+	<input type="checkbox" name="votes" value="{{ song.name }}{{ song.interpreter }}">
+	</td>
 	<td>
 	<a href="/{{ bandid }}/song/{{ song.name }}/{{ song.interpreter }}">
 	{{ song.name }}
@@ -28,6 +43,8 @@
       </tr>
     {% endfor %}
     </table>
+    <button class="btn btn-default" type="submit">Vote</button>
+    </form>
 
 
    <div>

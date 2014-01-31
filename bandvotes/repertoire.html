@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+  </head>
+  <body>
+    <div class="container theme-showcase">
+    <h2>{{ bandid }} Repertoire </h2>
+
+<p>
+This page shows the songs that are currently in {{ bandid }} repertoire.  To add songs to this list you must visit <a href="/{{ bandid }}/ranking">the candidate song ranking page</a>.
+</p>
+
+    <table class="table">
+	<th>Song Name</th><th>Interpreter/Version</th>
+	<th>Votes</th>
+    {% for song in songs %}
+      <tr>
+	<td>
+	<a href="/{{ bandid }}/song/{{ song.name }}/{{ song.interpreter }}">
+	{{ song.name }}
+	</a>
+	</td><td>{{ song.interpreter }}</td>
+	<td>{{ song.vote_cnt }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+
+  <div>
+  <a href="/{{ bandid }}/ranking">Candidate song ranking page</a>
+  </div>
+  <hr>
+  <div>
+  <a href="{{ logout_uri }}">Sign out</a>
+  </div>
+  </div>
+  </body>
+</html>
+{% endautoescape %}
+
