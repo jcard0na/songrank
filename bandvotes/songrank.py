@@ -136,9 +136,9 @@ class Vote(webapp2.RequestHandler):
             song.vote_cnt = 0
             song.comments = [] 
             song.links = [] 
+            song.votes = []
             
         unvote = self.request.get('undo', default_value=False)
-        logging.info(unvote)
         if user not in song.votes and not unvote:
             logging.info(str(user) + ' voted for ' + song.name)
             song.votes.append(user)
@@ -148,6 +148,7 @@ class Vote(webapp2.RequestHandler):
             song.votes.remove(user)
             song.vote_cnt -= 1
         else:
+            logging.error(str(user) + ' failed to vote/unvote for ' + song.name)
             return
 
         song.put()
