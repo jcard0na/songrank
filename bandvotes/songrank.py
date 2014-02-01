@@ -17,7 +17,7 @@ from google.appengine.api import users
 import webapp2
 import jinja2
 
-VOTES_TO_GRADUATE=6
+VOTES_TO_GRADUATE=5
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
