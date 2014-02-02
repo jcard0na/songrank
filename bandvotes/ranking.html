@@ -23,6 +23,9 @@ Songs start with one vote.  A song that reaches {{ votes_to_graduate }} votes
 is automatically moved to the <a href="/{{ bandid
 }}/repertoire">repertoire</a>.
 </p>
+<p>
+Songs that see no activity in a week (e.g. votes, comments, ...) will be deleted. 
+</p>
 
     <form name=multivote action="/multivote" method="post">
     <input type="hidden" name="bandid" value="{{ bandid }}">

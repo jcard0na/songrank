@@ -55,6 +55,7 @@ class SongNode(ndb.Model):
     last_update = ndb.DateTimeProperty(auto_now=True)
     comments = ndb.StringProperty(repeated=True)
     links = ndb.StringProperty(repeated=True)
+    graduated = ndb.BooleanProperty()
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
@@ -141,6 +142,8 @@ class Vote(webapp2.RequestHandler):
             song.comments = [] 
             song.links = [] 
             song.votes = []
+            song.graduated = False
+
             
         unvote = self.request.get('undo', default_value=False)
         if user not in song.votes and not unvote:
@@ -155,6 +158,7 @@ class Vote(webapp2.RequestHandler):
             logging.error(str(user) + ' failed to vote/unvote for ' + song.name)
             return
 
+        song.graduated = song.vote_cnt >= VOTES_TO_GRADUATE
         song.put()
         self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
 
@@ -180,6 +184,7 @@ class MultiVote(webapp2.RequestHandler):
                 logging.info(str(user) + ' voted for ' + song.name)
                 song.votes.append(user)
                 song.vote_cnt += 1
+                song.graduated = song.vote_cnt >= VOTES_TO_GRADUATE
                 song.put()
 
         self.redirect('/' + bandid + '/thanks')
@@ -209,16 +214,6 @@ class Ranking(webapp2.RequestHandler):
         }
 
         template = JINJA_ENVIRONMENT.get_template('ranking.html')
-        self.response.write(template.render(template_values))
-
-class Thanks(webapp2.RequestHandler):
-    def get(self, bandid):
-
-        template_values = {
-            'bandid': bandid,
-        }
-
-        template = JINJA_ENVIRONMENT.get_template('thanks.html')
         self.response.write(template.render(template_values))
 
 class Repertoire(webapp2.RequestHandler):
@@ -275,6 +270,42 @@ class SongDetails(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('song.html')
         self.response.write(template.render(template_values))
 
+class Thanks(webapp2.RequestHandler):
+    def get(self, bandid):
+
+        template_values = {
+            'bandid': bandid,
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('thanks.html')
+        self.response.write(template.render(template_values))
+
+class Purge(webapp2.RequestHandler):
+    def get(self, bandid):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        logging.info('bandid: ' + bandid)
+        try:
+            namespace_manager.set_namespace(bandid)
+        except:
+            self.error(400);
+            return
+
+        ranking_query = SongNode.query()
+        ranking_query = ranking_query.filter(SongNode.graduated == False)
+        week_old = datetime.datetime.now() - datetime.timedelta(days=7)
+        ranking_query = ranking_query.filter(SongNode.last_update < week_old)
+        stale_songs = ranking_query.fetch(keys_only=True)
+        ndb.delete_multi(stale_songs)
+
+        ranking_query = SongNode.query()
+        ranking_query = ranking_query.filter(SongNode.vote_cnt == 0)
+        abandoned_songs = ranking_query.fetch(keys_only=True)
+        ndb.delete_multi(abandoned_songs)
+        self.response.write("Purge successful")
+
 application = webapp2.WSGIApplication([
     (r'/', MainPage),
     (r'/vote', Vote),
@@ -283,6 +314,7 @@ application = webapp2.WSGIApplication([
     (r'/link', AddLink),
     (r'/(.*)/thanks', Thanks),
     (r'/(.*)/ranking', Ranking),
+    (r'/(.*)/purge', Purge),
     (r'/(.*)/results', Ranking),
     (r'/(.*)/repertoire', Repertoire),
     (r'/(.*)/song/(.*)/(.*)', SongDetails),
