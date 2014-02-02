@@ -1,0 +1,6 @@
+indexes:
+- kind: SongNode
+  properties:
+  - name: graduated
+  - name: last_update
+
