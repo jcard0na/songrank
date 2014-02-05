@@ -17,6 +17,9 @@ from google.appengine.api import users
 import webapp2
 import jinja2
 
+from model import SongNode
+from notifications import send_notifications
+
 VOTES_TO_GRADUATE=5
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -45,17 +48,6 @@ def fuzzy_readable_time(delta):
         return str(delta.days) + " day ago"
     else:
         return str(delta.days) + " days ago"
-
-class SongNode(ndb.Model):
-    """Models nominated song"""
-    name = ndb.StringProperty()
-    interpreter = ndb.StringProperty()
-    votes = ndb.UserProperty(repeated=True)
-    vote_cnt = ndb.IntegerProperty()
-    last_update = ndb.DateTimeProperty(auto_now=True)
-    comments = ndb.StringProperty(repeated=True)
-    links = ndb.StringProperty(repeated=True)
-    graduated = ndb.BooleanProperty()
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
@@ -88,7 +80,9 @@ class Comment(webapp2.RequestHandler):
             
         song.comments.append(comment + ' (' + user.nickname() + ')')
         song.put()
-        self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
+        song_url='/' + bandid + '/song/' + song.name + '/' + song.interpreter
+        send_notifications(song,'http://' + self.request.host + song_url, 'comment', user)
+        self.redirect(song_url)
 
 class AddLink(webapp2.RequestHandler):
     def post(self):
@@ -113,7 +107,9 @@ class AddLink(webapp2.RequestHandler):
             
         song.links.append(link)
         song.put()
-        self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
+        song_url='/' + bandid + '/song/' + song.name + '/' + song.interpreter
+        send_notifications(song,'http://' + self.request.host + song_url, 'link', user)
+        self.redirect(song_url)
 
 class Vote(webapp2.RequestHandler):
     def post(self):
@@ -133,7 +129,6 @@ class Vote(webapp2.RequestHandler):
         interpreter = self.request.get('interpreter')
         songid = name + interpreter
         song = SongNode.get_by_id(songid)
-        logging.info('good songid:' + songid + 'len: ' + str(len(songid)))
         if not song:
             song = SongNode(id=name+interpreter)
             song.name = name
@@ -145,22 +140,25 @@ class Vote(webapp2.RequestHandler):
             song.graduated = False
 
             
+        song_url='/' + bandid + '/song/' + name + '/' + interpreter
         unvote = self.request.get('undo', default_value=False)
         if user not in song.votes and not unvote:
             logging.info(str(user) + ' voted for ' + song.name)
             song.votes.append(user)
             song.vote_cnt += 1
+            send_notifications(song,'http://' + self.request.host + song_url, 'vote', user)
         elif user in song.votes and unvote == 'true':
             logging.info(str(user) + ' unvoted for ' + song.name)
             song.votes.remove(user)
             song.vote_cnt -= 1
+            send_notifications(song,'http://' + self.request.host + song_url, 'unvote', user)
         else:
             logging.error(str(user) + ' failed to vote/unvote for ' + song.name)
             return
 
         song.graduated = song.vote_cnt >= VOTES_TO_GRADUATE
         song.put()
-        self.redirect('/' + bandid + '/song/' + name + '/' + interpreter)
+        self.redirect(song_url)
 
 class MultiVote(webapp2.RequestHandler):
     def post(self):
@@ -180,8 +178,9 @@ class MultiVote(webapp2.RequestHandler):
         for songid in votes:
             logging.info('songid:' + songid + 'len: ' + str(len(songid)))
             song = SongNode.get_by_id(songid)
+            song_url='/' + bandid + '/song/' + song.name + '/' + song.interpreter
             if user not in song.votes:
-                logging.info(str(user) + ' voted for ' + song.name)
+                send_notifications(song,'http://' + self.request.host + song_url, 'vote', user)
                 song.votes.append(user)
                 song.vote_cnt += 1
                 song.graduated = song.vote_cnt >= VOTES_TO_GRADUATE
