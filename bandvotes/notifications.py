@@ -4,6 +4,7 @@
 #
 
 import logging
+import urllib
 
 from google.appengine.ext import ndb
 from google.appengine.api import namespace_manager
@@ -38,11 +39,8 @@ Bandvotes team
 
 To unsubscribe from these messages... bug the administrator to implement that feature.
 """ % (user.nickname(), actor.nickname(), action_messages[action], song.name, url)
-        logging.info(sender)
-        logging.info(to)
-        logging.info(subject)
-        logging.info(body)
         mail.send_mail(sender=sender,
                       to=to,
                       subject=subject,
                       body=body)
+	logging.info(body)

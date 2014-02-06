@@ -80,7 +80,7 @@ class Comment(webapp2.RequestHandler):
             
         song.comments.append(comment + ' (' + user.nickname() + ')')
         song.put()
-        song_url='/' + bandid + '/song/' + song.name + '/' + song.interpreter
+        song_url=urllib.quote('/' + bandid + '/song/' + song.name + '/' + song.interpreter)
         send_notifications(song,'http://' + self.request.host + song_url, 'comment', user)
         self.redirect(song_url)
 
@@ -107,7 +107,7 @@ class AddLink(webapp2.RequestHandler):
             
         song.links.append(link)
         song.put()
-        song_url='/' + bandid + '/song/' + song.name + '/' + song.interpreter
+        song_url=urllib.quote('/' + bandid + '/song/' + song.name + '/' + song.interpreter)
         send_notifications(song,'http://' + self.request.host + song_url, 'link', user)
         self.redirect(song_url)
 
@@ -132,7 +132,7 @@ class Vote(webapp2.RequestHandler):
         if not song:
             song = SongNode(id=name+interpreter)
             song.name = name
-            song.interpreter = self.request.get('interpreter')
+            song.interpreter = interpreter
             song.vote_cnt = 0
             song.comments = [] 
             song.links = [] 
@@ -140,7 +140,7 @@ class Vote(webapp2.RequestHandler):
             song.graduated = False
 
             
-        song_url='/' + bandid + '/song/' + name + '/' + interpreter
+        song_url=urllib.quote('/' + bandid + '/song/' + name + '/' + interpreter)
         unvote = self.request.get('undo', default_value=False)
         if user not in song.votes and not unvote:
             logging.info(str(user) + ' voted for ' + song.name)
@@ -178,7 +178,7 @@ class MultiVote(webapp2.RequestHandler):
         for songid in votes:
             logging.info('songid:' + songid + 'len: ' + str(len(songid)))
             song = SongNode.get_by_id(songid)
-            song_url='/' + bandid + '/song/' + song.name + '/' + song.interpreter
+            song_url=urllib.quote('/' + bandid + '/song/' + song.name + '/' + song.interpreter)
             if user not in song.votes:
                 send_notifications(song,'http://' + self.request.host + song_url, 'vote', user)
                 song.votes.append(user)
