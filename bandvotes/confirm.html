@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+  </head>
+  <body>
+    <div class="container theme-showcase">
+    <h2>Confirmed</h2>
+    <table class="table">
+    <tr>
+    <td>
+	<b>Name:</b>
+    </td>
+    <td>
+	{{ name }}
+    </td>
+    </tr>
+    <tr>
+    <td>
+	<b>Id:</b>
+    </td>
+    <td>
+	{{ bandid }}
+    </td>
+    </tr>
+    <tr>
+    <td>
+	<b>Votes to graduate:</b>
+    </td>
+    <td>
+	{{ votes_to_graduate }}
+    </td>
+    </tr>
+    </table>
+    </div>
+  </body>
+</html>
+{% endautoescape %}

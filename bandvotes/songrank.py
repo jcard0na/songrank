@@ -17,7 +17,7 @@ from google.appengine.api import users
 import webapp2
 import jinja2
 
-from model import SongNode
+from model import SongNode, Configuration, Bands
 from notifications import send_notifications
 
 VOTES_TO_GRADUATE=5
@@ -53,9 +53,35 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user:
-            self.redirect("five-frogs-and-a-matador/ranking")
+            template = JINJA_ENVIRONMENT.get_template('create.html')
+            self.response.write(template.render())
         else:
             self.redirect(users.create_login_url(self.request.uri))
+
+class NewBand(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+        votes_to_graduate = self.request.get('votes_to_graduate')
+        name = self.request.get('name')
+        bandid = urllib.quote(name.replace(' ', '-').lower())
+        if not name or not votes_to_graduate or Bands.get_by_id(bandid):
+            self.error(400)
+            return
+        Bands(id=bandid).put()
+        namespace_manager.set_namespace(bandid)
+        template_values = {
+            'bandid': bandid,
+            'name': name,
+            'votes_to_graduate': votes_to_graduate,
+        }
+        conf = Configuration()
+        conf.name = name
+        conf.votes_to_graduate = int(votes_to_graduate)
+
+        template = JINJA_ENVIRONMENT.get_template('confirm.html')
+        self.response.write(template.render(template_values))
 
 class Comment(webapp2.RequestHandler):
     def post(self):
@@ -305,8 +331,22 @@ class Purge(webapp2.RequestHandler):
         ndb.delete_multi(abandoned_songs)
         self.response.write("Purge successful")
 
+class Invite(webapp2.RequestHandler):
+    def get(self, bandid):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        logging.info('bandid: ' + bandid)
+        try:
+            namespace_manager.set_namespace(bandid)
+        except:
+            self.error(400);
+            return
+
 application = webapp2.WSGIApplication([
     (r'/', MainPage),
+    (r'/new', NewBand),
     (r'/vote', Vote),
     (r'/multivote', MultiVote),
     (r'/comment', Comment),
@@ -314,6 +354,7 @@ application = webapp2.WSGIApplication([
     (r'/(.*)/thanks', Thanks),
     (r'/(.*)/ranking', Ranking),
     (r'/(.*)/purge', Purge),
+    (r'/(.*)/invite', Invite),
     (r'/(.*)/results', Ranking),
     (r'/(.*)/repertoire', Repertoire),
     (r'/(.*)/song/(.*)/(.*)', SongDetails),

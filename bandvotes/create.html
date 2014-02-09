@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+  </head>
+  <body>
+    <div class="container theme-showcase">
+    <h2>Create a new band/club/group</h2>
+    <form name="name" action="/new" method="post">
+      Name:
+      <input type="text" name="name">
+      Votes to graduate:
+      <input type="text" name="votes_to_graduate">
+      <button class="btn btn-primary" type="submit">Send</button>
+    </form>
+    </div>
+  </body>
+</html>
+{% endautoescape %}
