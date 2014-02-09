@@ -67,18 +67,22 @@ class NewBand(webapp2.RequestHandler):
         name = self.request.get('name')
         bandid = urllib.quote(name.replace(' ', '-').lower())
         if not name or not votes_to_graduate or Bands.get_by_id(bandid):
-            self.error(400)
-            return
-        Bands(id=bandid).put()
-        namespace_manager.set_namespace(bandid)
+            msg = "Requested group exists already"
+	else:
+            msg = "New band created successfully"
+            Bands(id=bandid).put()
+            namespace_manager.set_namespace(bandid)
+            conf = Configuration(id="singleton")
+            conf.name = name
+            conf.votes_to_graduate = int(votes_to_graduate)
+            conf.put()
+
         template_values = {
             'bandid': bandid,
             'name': name,
             'votes_to_graduate': votes_to_graduate,
+            'msg': msg 
         }
-        conf = Configuration()
-        conf.name = name
-        conf.votes_to_graduate = int(votes_to_graduate)
 
         template = JINJA_ENVIRONMENT.get_template('confirm.html')
         self.response.write(template.render(template_values))
@@ -226,16 +230,18 @@ class Ranking(webapp2.RequestHandler):
         except:
             self.error(400);
             return
-        
+
+        conf = Configuration.get_by_id("singleton")
         ranking_query = SongNode.query().order(-SongNode.vote_cnt)
-        ranking_query = ranking_query.filter(SongNode.vote_cnt < VOTES_TO_GRADUATE)
+        ranking_query = ranking_query.filter(SongNode.vote_cnt < conf.votes_to_graduate)
         songs = ranking_query.fetch(50)
 
         template_values = {
             'songs': songs,
+            'band_name': conf.name,
             'bandid': bandid,
             'logout_uri': users.create_login_url(self.request.uri),
-            'votes_to_graduate': VOTES_TO_GRADUATE
+            'votes_to_graduate': conf.votes_to_graduate
         }
 
         template = JINJA_ENVIRONMENT.get_template('ranking.html')

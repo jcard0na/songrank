@@ -13,7 +13,7 @@
   </head>
   <body>
     <div class="container theme-showcase">
-    <h2>Confirmed</h2>
+    <h2>{{ msg }}</h2>
     <table class="table">
     <tr>
     <td>
@@ -37,6 +37,14 @@
     </td>
     <td>
 	{{ votes_to_graduate }}
+    </td>
+    </tr>
+    <tr>
+    <td>
+	<b>URL:</b>
+    </td>
+    <td>
+	<a href="{{ bandid }}/ranking">Ranking page</a>
     </td>
     </tr>
     </table>
