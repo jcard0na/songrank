@@ -159,8 +159,8 @@ class Vote(webapp2.RequestHandler):
         if user not in conf.auth_users:
             logging.info("letting an unauthed users vote... for now")
 
-        name = self.request.get('name')
-        interpreter = self.request.get('interpreter')
+        name = self.request.get('name').strip()
+        interpreter = self.request.get('interpreter').strip()
         songid = name + interpreter
         song = SongNode.get_by_id(songid)
         if not song:
