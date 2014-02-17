@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+  </head>
+  <body>
+    <div class="container theme-showcase">
+    <h2>{{ band_name }} Configuration</h2>
+
+    <div>admin: {{ admin }}</div>
+    <form name=auth action="/multiauth" method="post">
+    <input type="hidden" name="bandid" value="{{ bandid }}">
+    <table class="table">
+	<th>Can Vote</th><th>User Name</th>
+    {% for user in users %}
+      <tr>
+	<td>
+	<input type="checkbox" name="votes" value="{{ user.nickname() }}" {{ "checked" if user in auth_users }}>
+	</td>
+	<td>
+	{{ user.nickname() }}
+	</a>
+	</td>
+      </tr>
+    {% endfor %}
+    </table>
+    <button class="btn btn-default" type="submit">Submit</button>
+    </form>
+    <hr>
+    <a href="/{{ bandid }}/ranking">Back to ranking</a>
+  </div>
+  </body>
+</html>
+{% endautoescape %}
+

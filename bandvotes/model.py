@@ -13,9 +13,11 @@ class SongNode(ndb.Model):
 
 class Configuration(ndb.Model):
     """Models a band configuration"""
-    voters = ndb.UserProperty(repeated=True)
+    users = ndb.UserProperty(repeated=True)
+    auth_users = ndb.UserProperty(repeated=True)
     votes_to_graduate = ndb.IntegerProperty()
     name = ndb.StringProperty()
+    admin = ndb.UserProperty()
 
 class Bands(ndb.Model):
     """List of bands in global namespace"""

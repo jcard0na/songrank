@@ -73,6 +73,11 @@ Songs that see no activity in a week (e.g. votes, comments, ...) will be deleted
 
     <hr>
   <a href="{{ logout_uri }}">Sign out</a>
+  {% if is_admin %}
+  <div>
+  <a href="/{{ bandid }}/config">Config</a>
+  </div>
+  {% endif %}
   </div>
   </body>
 </html>

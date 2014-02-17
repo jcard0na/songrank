@@ -155,6 +155,10 @@ class Vote(webapp2.RequestHandler):
             self.error(400);
             return
 
+        conf = Configuration.get_by_id("singleton")
+        if user not in conf.auth_users:
+            logging.info("letting an unauthed users vote... for now")
+
         name = self.request.get('name')
         interpreter = self.request.get('interpreter')
         songid = name + interpreter
@@ -204,6 +208,10 @@ class MultiVote(webapp2.RequestHandler):
             self.error(400);
             return
 
+        conf = Configuration.get_by_id("singleton")
+        if user not in conf.auth_users:
+            logging.info("letting an unauthed users vote... for now")
+
         votes = self.request.get_all('votes')
         for songid in votes:
             logging.info('songid:' + songid + 'len: ' + str(len(songid)))
@@ -232,11 +240,18 @@ class Ranking(webapp2.RequestHandler):
             return
 
         conf = Configuration.get_by_id("singleton")
+        if user not in conf.users:
+            conf.users.append(user)
+            # TODO: For now users are authenticated by default.  This should
+            # probably be a configuration parameter.
+            conf.auth_users.append(user)
+            conf.put()
         ranking_query = SongNode.query().order(-SongNode.vote_cnt)
         ranking_query = ranking_query.filter(SongNode.vote_cnt < conf.votes_to_graduate)
         songs = ranking_query.fetch(50)
 
         template_values = {
+            'is_admin': conf.admin == user,
             'songs': songs,
             'band_name': conf.name,
             'bandid': bandid,
@@ -288,6 +303,7 @@ class SongDetails(webapp2.RequestHandler):
 
         song = SongNode.get_by_id(name+interpreter)
         if not song:
+            logging.error("Cant find song id = " + name + interpreter)
             self.error(404);
             return
 
@@ -350,6 +366,42 @@ class Invite(webapp2.RequestHandler):
             self.error(400);
             return
 
+class Config(webapp2.RequestHandler):
+    ''' Admin can change configuration parameters.  Can see users accessing the
+        system and strip voting rights
+    '''
+    def get(self, bandid):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        logging.info('bandid: ' + bandid)
+        try:
+            namespace_manager.set_namespace(bandid)
+        except:
+            self.error(400);
+            return
+        
+        conf = Configuration.get_by_id("singleton")
+
+        if conf.admin == None:
+            conf.admin = user
+            conf.put()
+
+        if conf.admin != user:
+            self.error(401);
+            return
+
+        template_values = {
+            'admin': conf.admin,
+            'users': conf.users,
+            'auth_users': conf.auth_users,
+            'bandid': bandid,
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('config.html')
+        self.response.write(template.render(template_values))
+
 application = webapp2.WSGIApplication([
     (r'/', MainPage),
     (r'/new', NewBand),
@@ -363,6 +415,7 @@ application = webapp2.WSGIApplication([
     (r'/(.*)/invite', Invite),
     (r'/(.*)/results', Ranking),
     (r'/(.*)/repertoire', Repertoire),
+    (r'/(.*)/config', Config),
     (r'/(.*)/song/(.*)/(.*)', SongDetails),
 ], debug=True)
 
